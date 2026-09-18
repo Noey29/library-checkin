@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ห้องสมุด QR • เช็กชื่อ • ยืม • คืน</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:#f3f7fb;color:#172033}
+header{background:#1769aa;color:#fff;text-align:center;padding:24px 15px}h1{margin:0 0 5px;font-size:26px}header p{margin:0}
+nav{background:#fff;padding:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 2px 8px #0001}
+button{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+nav button{background:#e7f1fa;color:#1769aa}nav button.active,.primary{background:#1769aa;color:#fff}
+main{max-width:950px;margin:20px auto;padding:0 14px}.page{display:none}.page.active{display:block}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px #0000000b}
+h2{color:#1769aa;margin-top:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}
+label{font-weight:700;font-size:14px;display:block}input{width:100%;padding:12px;margin-top:6px;border:1px solid #ccd6e2;border-radius:10px;font-size:16px}
+.primary{margin-top:15px}.secondary{background:#edf2f7}.danger{background:#fee2e2;color:#991b1b}
+.qrbox{text-align:center;border:2px dashed #b8cce0;border-radius:14px;padding:20px;margin-top:15px}.qrbox canvas,.qrbox img{margin:12px auto;display:block}
+.small{font-size:13px;color:#65758b}.linkbox{width:100%;padding:11px;background:#f4f7fa;border-radius:9px;word-break:break-all}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px;border-bottom:1px solid #e5eaf0;text-align:left}th{background:#f1f6fb}
+.badge{background:#e9f7ee;color:#18743b;padding:4px 8px;border-radius:99px;font-size:12px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#f4f8fc;border-radius:12px;padding:14px}.stat b{display:block;font-size:25px;color:#1769aa}
+@media(max-width:600px){.stats{grid-template-columns:1fr}table{display:block;overflow:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<header><h1>📚 ระบบห้องสมุด QR Code</h1><p>เช็กชื่อ • ยืมหนังสือ • คืนหนังสือ</p></header>
+<nav>
+<button class="active" onclick="show('home',this)">🏠 หน้าหลัก</button>
+<button onclick="show('checkin',this)">👤 เช็กชื่อ</button>
+<button onclick="show('borrow',this)">📖 ยืม</button>
+<button onclick="show('return',this)">🔄 คืน</button>
+<button onclick="show('records',this)">📋 รายการ</button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+<div class="card">
+<h2>📱 QR Code สำหรับนักเรียน</h2>
+<p>นำ QR Code นี้ไปติดหน้าห้องสมุด เมื่อนักเรียนสแกน จะเปิดระบบนี้และสามารถเลือกเช็กชื่อ ยืม หรือคืนหนังสือได้</p>
+<div class="qrbox">
+<div id="qrcode"></div>
+<p class="small">ลิงก์ของหน้านี้</p>
+<div class="linkbox" id="pageUrl"></div>
+<button class="primary" onclick="printQR()">🖨️ พิมพ์ QR Code</button>
+</div>
+</div>
+<div class="card">
+<h2>วิธีใช้งาน</h2>
+<ol>
+<li>เปิดหน้าเว็บนี้</li><li>สแกน QR Code ด้วยโทรศัพท์</li><li>เลือกเมนู เช็กชื่อ / ยืม / คืน</li><li>กรอกข้อมูลแล้วกดบันทึก</li>
+</ol>
+<p class="small">หมายเหตุ: QR Code จะชี้มายังที่อยู่ของหน้าเว็บนี้ หากเปิดเป็นไฟล์ในเครื่อง QR จะใช้งานได้เฉพาะอุปกรณ์ที่เข้าถึงไฟล์นั้นได้ ควรนำไฟล์ขึ้นโฮสต์ก่อนเพื่อให้โทรศัพท์ทุกเครื่องสแกนเข้าถึงได้</p>
+</div>
+</section>
+
+<section id="checkin" class="page">
+<div class="card"><h2>👤 เช็กชื่อเข้าใช้ห้องสมุด</h2>
+<div class="grid">
+<label>ชื่อ-นามสกุล<input id="ciName" placeholder="เช่น ธิดารัตน์ บูรณ์เจริญ"></label>
+<label>เลขที่<input id="ciNo" placeholder="24"></label>
+<label>ชั้น/ห้อง<input id="ciClass" placeholder="ม.6/2"></label>
+</div><button class="primary" onclick="checkIn()">บันทึกการเช็กชื่อ</button></div>
+</section>
+
+<section id="borrow" class="page">
+<div class="card"><h2>📖 ยืมหนังสือ</h2>
+<div class="grid">
+<label>ชื่อผู้ยืม<input id="bName" placeholder="ชื่อ-นามสกุล"></label>
+<label>เลขที่<input id="bNo" placeholder="เลขที่"></label>
+<label>ชั้น/ห้อง<input id="bClass" placeholder="ม.6/2"></label>
+<label>ชื่อหนังสือ<input id="bBook" placeholder="ชื่อหนังสือ"></label>
+<label>รหัสหนังสือ<input id="bCode" placeholder="BK001"></label>
+</div><button class="primary" onclick="borrow()">บันทึกการยืม</button></div>
+</section>
+
+<section id="return" class="page">
+<div class="card"><h2>🔄 คืนหนังสือ</h2>
+<label>รหัสหนังสือ<input id="rCode" placeholder="BK001"></label>
+<label style="margin-top:12px">ชื่อผู้คืน<input id="rName" placeholder="ชื่อ-นามสกุล"></label>
+<button class="primary" onclick="returnBook()">บันทึกการคืน</button>
+</div></section>
+
+<section id="records" class="page">
+<div class="card"><h2>📊 สรุป</h2><div class="stats">
+<div class="stat">เช็กชื่อวันนี้<b id="sCheck">0</b></div><div class="stat">กำลังยืม<b id="sBorrow">0</b></div><div class="stat">คืนแล้ว<b id="sReturn">0</b></div>
+</div></div>
+<div class="card"><button class="danger" onclick="clearData()">ล้างข้อมูลในเครื่องนี้</button>
+<div style="overflow:auto;margin-top:15px"><table><thead><tr><th>ประเภท</th><th>ชื่อ</th><th>หนังสือ</th><th>รหัส</th><th>วันเวลา</th><th>สถานะ</th></tr></thead><tbody id="tbody"></tbody></table></div>
+</div></section>
+</main>
+
+<script>
+const KEY="library_qr_records_v2";
+let records=JSON.parse(localStorage.getItem(KEY)||"[]");
+
+function save(){localStorage.setItem(KEY,JSON.stringify(records));render()}
+function now(){return new Date().toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"})}
+function req(ids){for(const id of ids){if(!document.getElementById(id).value.trim()){alert("กรุณากรอกข้อมูลให้ครบ");return false}}return true}
+function checkIn(){if(!req(["ciName","ciNo","ciClass"]))return;records.push({type:"เช็กชื่อ",name:ciName.value.trim(),book:"-",code:"-",time:now(),status:"เข้าใช้"});ciName.value=ciNo.value=ciClass.value="";save();alert("บันทึกเช็กชื่อแล้ว")}
+function borrow(){if(!req(["bName","bNo","bClass","bBook","bCode"]))return;let c=bCode.value.trim();if(records.some(x=>x.type==="ยืม"&&x.code===c&&x.status==="กำลังยืม")){alert("หนังสือรหัสนี้กำลังถูกยืมอยู่");return}records.push({type:"ยืม",name:bName.value.trim(),book:bBook.value.trim(),code:c,time:now(),status:"กำลังยืม"});bName.value=bNo.value=bClass.value=bBook.value=bCode.value="";save();alert("บันทึกการยืมแล้ว")}
+function returnBook(){if(!req(["rCode","rName"]))return;let c=rCode.value.trim();let x=[...records].reverse().find(a=>a.type==="ยืม"&&a.code===c&&a.status==="กำลังยืม");if(!x){alert("ไม่พบหนังสือที่กำลังยืมรหัสนี้");return}x.status="คืนแล้ว";x.returnName=rName.value.trim();x.returnTime=now();rCode.value=rName.value="";save();alert("บันทึกการคืนแล้ว")}
+function render(){let today=new Date().toLocaleDateString("th-TH");sCheck.textContent=records.filter(x=>x.type==="เช็กชื่อ"&&x.time.startsWith(today)).length;sBorrow.textContent=records.filter(x=>x.type==="ยืม"&&x.status==="กำลังยืม").length;sReturn.textContent=records.filter(x=>x.status==="คืนแล้ว").length;tbody.innerHTML=records.length?records.slice().reverse().map(x=>`<tr><td>${x.type}</td><td>${x.name}</td><td>${x.book}</td><td>${x.code}</td><td>${x.time}</td><td><span class="badge">${x.status}</span></td></tr>`).join(""):`<tr><td colspan="6" style="text-align:center;padding:25px">ยังไม่มีข้อมูล</td></tr>`}
+function show(id,btn){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");render()}
+function clearData(){if(confirm("ล้างข้อมูลทั้งหมดในเครื่องนี้ใช่ไหม?")){records=[];save()}}
+function makeQR(){let u=location.href;pageUrl.textContent=u;new QRCode(document.getElementById("qrcode"),{text:u,width:220,height:220})}
+function printQR(){window.print()}
+makeQR();render();
+</script>
+</body>
+</html>
